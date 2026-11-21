@@ -806,8 +806,8 @@ class AppState extends ChangeNotifier {
 
   /// Returns (voucher, error)
   Future<(Voucher?, String?)> generateVoucher(int pesos, Pages? req) async {
-    if (pesos < vc.min || pesos > vc.max || (pesos * vc.rate) < 10 || (pesos * vc.rate) > 1000) {
-      return (null, 'Warning! Limit Exceeded! Please enter a valid amount within the allowed points or peso limit.');
+    if (pesos <= 0 || pesos > 100 || pesos < vc.min || pesos > vc.max || (pesos * vc.rate) < 10 || (pesos * vc.rate) > 1000) {
+      return (null, 'Warning! Limit Exceeded! Pesos must be 1–100 and points must be 10–1000.');
     }
     if (pesos < kPrices.bw) return (null, 'The cheapest page costs ₱${kPrices.bw}');
     if (pesos * vc.rate > pts) return (null, 'Not enough points (need ${pesos * vc.rate})');
@@ -955,6 +955,9 @@ class AppState extends ChangeNotifier {
 
   /// Saves the voucher rules + points-per-item (admin only). Returns an error or null.
   Future<String?> pushSettings() async {
+    if (vc.rate <= 0 || vc.rate > 100 || vc.min <= 0 || vc.min > 100 || vc.max <= 0 || vc.max > 100 || vc.max < vc.min || vc.days <= 0 || vc.days > 365) {
+      return 'Invalid settings limits (Pesos must be 1–100, Rate 1–100, Days 1–365)';
+    }
     try {
       await _db.from('settings').upsert([
         {'key': 'voucher_rate', 'value': vc.rate},
@@ -965,8 +968,8 @@ class AppState extends ChangeNotifier {
         {'key': 'voucher_office', 'value': vc.office},
         {'key': 'voucher_note', 'value': vc.note},
         {'key': 'voucher_color', 'value': '0x${vc.colorHex.toRadixString(16).toUpperCase()}'},
-        {'key': 'points_rec', 'value': pp['rec'] ?? 10},
-        {'key': 'points_non', 'value': pp['non'] ?? 10},
+        {'key': 'points_rec', 'value': (pp['rec'] ?? 10).clamp(1, 1000)},
+        {'key': 'points_non', 'value': (pp['non'] ?? 10).clamp(1, 1000)},
       ]);
       return null;
     } on PostgrestException catch (e) {

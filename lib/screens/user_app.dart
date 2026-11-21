@@ -976,13 +976,18 @@ class _RewardsScreenState extends State<RewardsScreen> {
   Future<void> gen(AppState s) async {
     if (busy) return;
     final gm = vm == 'g';
-    final amt = gm ? pg.total(kPrices) : (int.tryParse(pesos.text.trim()) ?? 0);
+    final rawPesos = pesos.text.trim();
+    final amt = gm ? pg.total(kPrices) : (int.tryParse(rawPesos) ?? 0);
     if (gm && amt == 0) {
       setState(() => err = 'Choose at least 1 page');
       return;
     }
-    if (amt < s.vc.min || amt > s.vc.max || (amt * s.vc.rate) < 10 || (amt * s.vc.rate) > 1000) {
-      setState(() => err = 'Warning! Limit Exceeded! Please enter a valid amount within the allowed points or peso limit.');
+    if (amt <= 0 || amt > 100 || amt < s.vc.min || amt > s.vc.max || (amt * s.vc.rate) < 10 || (amt * s.vc.rate) > 1000) {
+      setState(() => err = 'Warning! Limit Exceeded! Pesos must be 1–100 and points must be 10–1000.');
+      return;
+    }
+    if (amt * s.vc.rate > s.pts) {
+      setState(() => err = 'Not enough points (need ${amt * s.vc.rate})');
       return;
     }
     busy = true;

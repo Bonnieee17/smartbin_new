@@ -56,7 +56,7 @@ class _SmartBinAppState extends State<SmartBinApp> {
       );
 }
 
-/// Header (logo + portal switch + theme) and the active portal.
+   /// Header (logo + portal switch + theme) and the active portal.
 class _Root extends StatelessWidget {
   const _Root();
   @override
@@ -64,6 +64,7 @@ class _Root extends StatelessWidget {
     final s = AppScope.of(c);
     final p = s.pal;
     return Scaffold(
+
       backgroundColor: p.bg,
       body: SafeArea(
         bottom: false,

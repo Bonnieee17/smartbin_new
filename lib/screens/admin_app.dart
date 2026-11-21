@@ -584,7 +584,9 @@ class _AdminBadgesState extends State<_AdminBadges> {
             primary: true,
             label: '+ Add Badge',
             onTap: () {
-              s.addBadge(n.text, int.tryParse(m.text) ?? 0);
+              final pts = (int.tryParse(m.text.trim()) ?? 0).clamp(0, 1000000);
+              if (n.text.trim().isEmpty) return;
+              s.addBadge(n.text, pts);
               n.clear();
               m.clear();
             },
@@ -647,7 +649,8 @@ class _BadgeAdminTileState extends State<_BadgeAdminTile> {
                     label: 'Save',
                     onTap: () {
                       if (n.text.trim().isEmpty) return;
-                      s.saveBadge(b, n.text.trim(), i.text.trim().isEmpty ? '🏆' : i.text.trim(), int.tryParse(m.text) ?? 0);
+                      final pts = (int.tryParse(m.text.trim()) ?? 0).clamp(0, 1000000);
+                      s.saveBadge(b, n.text.trim(), i.text.trim().isEmpty ? '🏆' : i.text.trim(), pts);
                       setState(() => edit = false);
                     },
                   ),
@@ -726,11 +729,11 @@ class _AdminRewardsState extends State<_AdminRewards> {
     final rec = int.tryParse(recCtrl.text.trim()) ?? 0;
     final non = int.tryParse(nonCtrl.text.trim()) ?? 0;
 
-    if (rate <= 0 || min <= 0 || max <= 0 || days <= 0 || rec < 0 || non < 0) {
+    if (rate <= 0 || rate > 100 || min <= 0 || min > 100 || max <= 0 || max > 100 || days <= 0 || days > 365 || rec <= 0 || rec > 1000 || non <= 0 || non > 1000) {
       setState(() {
         loading = false;
         isSuccess = false;
-        msg = 'Error: All numeric values must be positive whole numbers greater than zero.';
+        msg = 'Error: Pesos must be 1–100, Rate 1–100, Days 1–365, Points/Item 1–1000.';
       });
       return;
     }

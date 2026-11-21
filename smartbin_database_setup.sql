@@ -33,9 +33,9 @@ create table public.profiles (
   name             text not null,
   gender           text not null default '' check (gender in ('', 'Girl', 'Boy')),
   role             text not null default 'user' check (role in ('user', 'admin', 'psits')),
-  points           int  not null default 0 check (points >= 0),
-  lifetime_points  int  not null default 0 check (lifetime_points >= 0),
-  items            int  not null default 0 check (items >= 0),
+  points           int  not null default 0 check (points >= 0 and points <= 1000000),
+  lifetime_points  int  not null default 0 check (lifetime_points >= 0 and lifetime_points <= 10000000),
+  items            int  not null default 0 check (items >= 0 and items <= 100000),
   created_at       timestamptz not null default now()
 );
 create index profiles_role_idx on public.profiles(role);
@@ -90,7 +90,7 @@ create table public.deposit_tokens (
   nonce       text not null unique,
   bin_id      bigint references public.bins(id) on delete cascade,
   kind        text not null check (kind in ('rec', 'non')),
-  points      int  not null check (points > 0),
+  points      int  not null check (points > 0 and points <= 1000),
   is_test     boolean not null default false,
   expires_at  timestamptz not null default now() + interval '2 minutes',
   used_by     uuid references public.profiles(id) on delete set null,
@@ -104,7 +104,7 @@ create table public.badges (
   id          bigserial primary key,
   name        text not null unique,
   icon        text not null default '🏆',
-  min_points  int  not null default 0,
+  min_points  int  not null default 0 check (min_points >= 0 and min_points <= 1000000),
   created_at  timestamptz not null default now()
 );
 
@@ -133,8 +133,8 @@ create table public.vouchers (
   user_id      uuid not null references public.profiles(id) on delete cascade,
   user_name    text not null,
   student_id   text not null,
-  pesos        int  not null check (pesos > 0),
-  points_cost  int  not null check (points_cost > 0),
+  pesos        int  not null check (pesos > 0 and pesos <= 100),
+  points_cost  int  not null check (points_cost >= 10 and points_cost <= 1000),
   price_bw     int  not null default 3,
   price_col    int  not null default 4,
   price_pic    int  not null default 5,
@@ -417,9 +417,9 @@ declare
 begin
   if u is null then raise exception 'Not authenticated'; end if;
   v_need := p_pesos * v_rate;
-  if p_pesos < v_min or p_pesos > v_max or v_need < 10 or v_need > 1000 then
+  if p_pesos <= 0 or p_pesos < v_min or p_pesos > v_max or p_pesos > 100 or v_need < 10 or v_need > 1000 then
     return jsonb_build_object('ok', false,
-      'error', 'Warning! Limit Exceeded! Please enter a valid amount within the allowed points or peso limit.');
+      'error', 'Warning! Limit Exceeded! Pesos must be 1–100 and points must be 10–1000.');
   end if;
   if p_pesos < pr_bw then
     return jsonb_build_object('ok', false, 'error', 'The cheapest page costs ₱' || pr_bw);
