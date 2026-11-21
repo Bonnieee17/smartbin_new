@@ -311,23 +311,13 @@ class _AdminDash extends StatelessWidget {
     final pi = s.users.fold<int>(0, (a, u) => a + u.life);
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       StatRow([StatTile('Items accepted', '$it'), StatTile('Rejected', '${s.rej}'), StatTile('Points issued', '$pi')]),
-      if (s.bins.isEmpty)
+      for (final b in s.bins)
         NCard(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const H3('Getting started'),
-            const Mut('Load an example bin (2 compartments), badges, vouchers and point rules.'),
-            const SizedBox(height: 10),
-            NBtn(primary: true, label: 'Load example data', onTap: () => s.seed()),
+          child: Column(children: [
+            NRow(left: Bold('🗑 ${b.name}'), right: Bulbs(b.comps.map((x) => x.fill).reduce((a, b) => a > b ? a : b)), border: false),
+            _binFillRows(b),
           ]),
-        )
-      else
-        for (final b in s.bins)
-          NCard(
-            child: Column(children: [
-              NRow(left: Bold('🗑 ${b.name}'), right: Bulbs(b.comps.map((x) => x.fill).reduce((a, b) => a > b ? a : b)), border: false),
-              _binFillRows(b),
-            ]),
-          ),
+        ),
       StatRow([StatTile('Bins', '${s.bins.length}'), StatTile('Users', '${s.users.length}'), StatTile('Vouchers issued', '${s.log.length}')]),
       NCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const H3('Average Fill Level'), Donut(avgFill(s))])),
       boardCard(s),
@@ -393,6 +383,12 @@ class _BinCardState extends State<_BinCard> {
   bool open = false, edit = false;
   late final en = TextEditingController(text: widget.b.name);
   late final el = TextEditingController(text: widget.b.loc);
+  @override
+  void didUpdateWidget(covariant _BinCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.b.name != widget.b.name) en.text = widget.b.name;
+    if (oldWidget.b.loc != widget.b.loc) el.text = widget.b.loc;
+  }
   @override
   void dispose() {
     en.dispose();
@@ -619,6 +615,13 @@ class _BadgeAdminTileState extends State<_BadgeAdminTile> {
   late final n = TextEditingController(text: widget.b.name);
   late final i = TextEditingController(text: widget.b.icon);
   late final m = TextEditingController(text: '${widget.b.min}');
+  @override
+  void didUpdateWidget(covariant _BadgeAdminTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.b.name != widget.b.name) n.text = widget.b.name;
+    if (oldWidget.b.icon != widget.b.icon) i.text = widget.b.icon;
+    if (oldWidget.b.min != widget.b.min) m.text = '${widget.b.min}';
+  }
   @override
   void dispose() {
     n.dispose();

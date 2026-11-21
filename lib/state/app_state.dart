@@ -159,18 +159,43 @@ class AppState extends ChangeNotifier {
   //  Loading from Supabase & Persistence
   // =====================================================================
 
-  /// Called once at start-up: start all portals logged out.
+  /// Called once at start-up: restores active sessions without auto-logout.
   Future<void> _restore() async {
     try {
-      // Ensure all 3 portals start logged out when you first open the app
+      final prefs = await SharedPreferences.getInstance();
+      rememberUser = prefs.getBool('remember_user') ?? false;
+      rememberAdmin = prefs.getBool('remember_admin') ?? false;
+      rememberPsits = prefs.getBool('remember_psits') ?? false;
+
+      savedAdminId = prefs.getString('saved_admin_id') ?? '';
+      savedAdminPw = prefs.getString('saved_admin_pw') ?? '';
+      savedPsitsId = prefs.getString('saved_psits_id') ?? '';
+      savedPsitsPw = prefs.getString('saved_psits_pw') ?? '';
+      savedUserId = prefs.getString('saved_user_id') ?? '';
+      savedUserPw = prefs.getString('saved_user_pw') ?? '';
+
+      if (rememberAdmin && savedAdminId.isNotEmpty) {
+        adminIn = true;
+        portal = Portal.admin;
+        a = 'dash';
+        me = UserAcct(name: 'Administrator', id: savedAdminId, gender: 'Boy', points: 9999);
+        splash = false;
+      } else if (rememberPsits && savedPsitsId.isNotEmpty) {
+        psitsIn = true;
+        portal = Portal.psits;
+        p = 'dash';
+        me = UserAcct(name: 'PSITS Staff', id: savedPsitsId, gender: 'Girl', points: 9999);
+        splash = false;
+      } else if (_db.auth.currentUser != null || (rememberUser && savedUserId.isNotEmpty)) {
+        splash = false;
+      } else {
+        splash = true;
+      }
+      _startPoll();
+      await refresh();
+    } catch (_) {
       splash = true;
-      adminIn = false;
-      psitsIn = false;
-      me = null;
-      try {
-        await _db.auth.signOut();
-      } catch (_) {}
-    } catch (_) {}
+    }
     notifyListeners();
   }
 
